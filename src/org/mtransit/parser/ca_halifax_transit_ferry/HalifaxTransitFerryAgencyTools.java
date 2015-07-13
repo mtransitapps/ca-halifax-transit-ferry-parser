@@ -36,7 +36,7 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public void start(String[] args) {
-		System.out.printf("\nGenerating Halifax Transit ferry data...\n");
+		System.out.printf("\nGenerating Halifax Transit ferry data...");
 		long start = System.currentTimeMillis();
 		this.serviceIds = extractUsefulServiceIds(args, this);
 		super.start(args);
