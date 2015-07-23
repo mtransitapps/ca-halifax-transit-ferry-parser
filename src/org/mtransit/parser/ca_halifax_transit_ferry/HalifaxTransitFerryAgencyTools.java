@@ -80,9 +80,9 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public long getRouteId(GRoute gRoute) {
-		if (FER_D.equals(gRoute.route_short_name)) {
+		if (FER_D.equals(gRoute.getRouteShortName())) {
 			return RID_ALD;
-		} else if (FER_W.equals(gRoute.route_short_name)) {
+		} else if (FER_W.equals(gRoute.getRouteShortName())) {
 			return RID_WS;
 		}
 		System.out.println("Unexpected route ID " + gRoute);
@@ -95,9 +95,9 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public String getRouteLongName(GRoute gRoute) {
-		if (FER_D.equals(gRoute.route_short_name)) {
+		if (FER_D.equals(gRoute.getRouteShortName())) {
 			return RLN_ALD;
-		} else if (FER_W.equals(gRoute.route_short_name)) {
+		} else if (FER_W.equals(gRoute.getRouteShortName())) {
 			return RLN_WS;
 		}
 		System.out.println("Unexpected route long name " + gRoute);
@@ -110,9 +110,9 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public String getRouteShortName(GRoute gRoute) {
-		if (FER_D.equals(gRoute.route_short_name)) {
+		if (FER_D.equals(gRoute.getRouteShortName())) {
 			return RTS_ALD;
-		} else if (FER_W.equals(gRoute.route_short_name)) {
+		} else if (FER_W.equals(gRoute.getRouteShortName())) {
 			return RTS_WS;
 		}
 		System.out.println("Unexpected route short name " + gRoute);
@@ -142,19 +142,19 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 	@Override
 	public void setTripHeadsign(MRoute mRoute, MTrip mTrip, GTrip gTrip, GSpec gtfs) {
 		if (mRoute.id == RID_ALD) {
-			if (gTrip.direction_id == 0) {
-				mTrip.setHeadsignString(DARTMOUTH, gTrip.direction_id);
+			if (gTrip.getDirectionId() == 0) {
+				mTrip.setHeadsignString(DARTMOUTH, gTrip.getDirectionId());
 				return;
-			} else if (gTrip.direction_id == 1) {
-				mTrip.setHeadsignString(HALIFAX, gTrip.direction_id);
+			} else if (gTrip.getDirectionId() == 1) {
+				mTrip.setHeadsignString(HALIFAX, gTrip.getDirectionId());
 				return;
 			}
 		} else if (mRoute.id == RID_WS) {
-			if (gTrip.direction_id == 0) {
-				mTrip.setHeadsignString(HALIFAX, gTrip.direction_id);
+			if (gTrip.getDirectionId() == 0) {
+				mTrip.setHeadsignString(HALIFAX, gTrip.getDirectionId());
 				return;
-			} else if (gTrip.direction_id == 1) {
-				mTrip.setHeadsignString(WOODSIDE, gTrip.direction_id);
+			} else if (gTrip.getDirectionId() == 1) {
+				mTrip.setHeadsignString(WOODSIDE, gTrip.getDirectionId());
 				return;
 			}
 		}
@@ -180,20 +180,20 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public int getStopId(GStop gStop) {
-		if (Utils.isDigitsOnly(gStop.stop_id)) {
-			return Integer.parseInt(gStop.stop_id);
+		if (Utils.isDigitsOnly(gStop.getStopId())) {
+			return Integer.parseInt(gStop.getStopId());
 		}
-		Matcher matcher = DIGITS.matcher(gStop.stop_id);
+		Matcher matcher = DIGITS.matcher(gStop.getStopId());
 		matcher.find();
 		return Integer.parseInt(matcher.group());
 	}
 
 	@Override
 	public String getStopCode(GStop gStop) {
-		if (Utils.isDigitsOnly(gStop.stop_id)) {
-			return gStop.stop_id; // using stop ID as stop code ("GoTime" number)
+		if (Utils.isDigitsOnly(gStop.getStopId())) {
+			return gStop.getStopId(); // using stop ID as stop code ("GoTime" number)
 		}
-		Matcher matcher = DIGITS.matcher(gStop.stop_id);
+		Matcher matcher = DIGITS.matcher(gStop.getStopId());
 		matcher.find();
 		return matcher.group();
 	}
