@@ -141,7 +141,7 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public void setTripHeadsign(MRoute mRoute, MTrip mTrip, GTrip gTrip, GSpec gtfs) {
-		if (mRoute.id == RID_ALD) {
+		if (mRoute.getId() == RID_ALD) {
 			if (gTrip.getDirectionId() == 0) {
 				mTrip.setHeadsignString(DARTMOUTH, gTrip.getDirectionId());
 				return;
@@ -149,7 +149,7 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 				mTrip.setHeadsignString(HALIFAX, gTrip.getDirectionId());
 				return;
 			}
-		} else if (mRoute.id == RID_WS) {
+		} else if (mRoute.getId() == RID_WS) {
 			if (gTrip.getDirectionId() == 0) {
 				mTrip.setHeadsignString(HALIFAX, gTrip.getDirectionId());
 				return;
