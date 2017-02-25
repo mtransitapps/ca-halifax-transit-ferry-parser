@@ -28,7 +28,8 @@ import org.mtransit.parser.CleanUtils;
 import org.mtransit.parser.mt.data.MTrip;
 
 // http://www.halifax.ca/opendata/
-// http://www.halifax.ca/metrotransit/googletransitfeed/google_transit.zip
+// http://www.halifax.ca/opendata/transit.php
+// http://gtfs.halifax.ca/static/google_transit.zip
 public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 
 	public static void main(String[] args) {
