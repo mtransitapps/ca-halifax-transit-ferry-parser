@@ -213,10 +213,12 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 	}
 
 	private static final Pattern FERRY_STOP = Pattern.compile("(ferry stop - )", Pattern.CASE_INSENSITIVE);
+	private static final Pattern ENDS_WITH_NUMBER = Pattern.compile("( \\([\\d]+\\)$)", Pattern.CASE_INSENSITIVE);
 
 	@Override
 	public String cleanStopName(String gStopName) {
 		gStopName = FERRY_STOP.matcher(gStopName).replaceAll(StringUtils.EMPTY);
+		gStopName = ENDS_WITH_NUMBER.matcher(gStopName).replaceAll(StringUtils.EMPTY);
 		gStopName = CleanUtils.cleanNumbers(gStopName);
 		return CleanUtils.cleanLabel(gStopName);
 	}
@@ -229,8 +231,12 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 			return Integer.parseInt(gStop.getStopId());
 		}
 		Matcher matcher = DIGITS.matcher(gStop.getStopId());
-		matcher.find();
-		return Integer.parseInt(matcher.group());
+		if (matcher.find()) {
+			return Integer.parseInt(matcher.group());
+		}
+		System.out.printf("\nUnexpected stop ID for %s!\n", gStop);
+		System.exit(-1);
+		return -1;
 	}
 
 	@Override
@@ -239,7 +245,11 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 			return gStop.getStopId(); // using stop ID as stop code ("GoTime" number)
 		}
 		Matcher matcher = DIGITS.matcher(gStop.getStopId());
-		matcher.find();
-		return matcher.group();
+		if (matcher.find()) {
+			return matcher.group();
+		}
+		System.out.printf("\nUnexpected stop code for %s!\n", gStop);
+		System.exit(-1);
+		return null;
 	}
 }
