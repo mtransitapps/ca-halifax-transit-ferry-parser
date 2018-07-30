@@ -87,8 +87,8 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 		return MAgency.ROUTE_TYPE_FERRY;
 	}
 
-	private static final long RID_ALD = 100001l;
-	private static final long RID_WS = 100002l;
+	private static final long RID_ALD = 100_001L;
+	private static final long RID_WS = 100_002L;
 
 	private static final String FER_D = "FerD";
 	private static final String FER_W = "FerW";
