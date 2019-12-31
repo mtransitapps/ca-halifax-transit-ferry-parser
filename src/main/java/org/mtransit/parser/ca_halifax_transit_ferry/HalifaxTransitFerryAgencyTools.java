@@ -1,19 +1,13 @@
 package org.mtransit.parser.ca_halifax_transit_ferry;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.commons.lang3.StringUtils;
+import org.mtransit.parser.CleanUtils;
 import org.mtransit.parser.DefaultAgencyTools;
+import org.mtransit.parser.MTLog;
 import org.mtransit.parser.Pair;
 import org.mtransit.parser.SplitUtils;
-import org.mtransit.parser.Utils;
 import org.mtransit.parser.SplitUtils.RouteTripSpec;
+import org.mtransit.parser.Utils;
 import org.mtransit.parser.gtfs.data.GCalendar;
 import org.mtransit.parser.gtfs.data.GCalendarDate;
 import org.mtransit.parser.gtfs.data.GRoute;
@@ -23,9 +17,16 @@ import org.mtransit.parser.gtfs.data.GTrip;
 import org.mtransit.parser.gtfs.data.GTripStop;
 import org.mtransit.parser.mt.data.MAgency;
 import org.mtransit.parser.mt.data.MRoute;
-import org.mtransit.parser.mt.data.MTripStop;
-import org.mtransit.parser.CleanUtils;
 import org.mtransit.parser.mt.data.MTrip;
+import org.mtransit.parser.mt.data.MTripStop;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 // http://www.halifax.ca/opendata/
 // http://www.halifax.ca/opendata/transit.php
@@ -46,11 +47,11 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public void start(String[] args) {
-		System.out.printf("\nGenerating Halifax Transit ferry data...");
+		MTLog.log("Generating Halifax Transit ferry data...");
 		long start = System.currentTimeMillis();
-		this.serviceIds = extractUsefulServiceIds(args, this);
+		this.serviceIds = extractUsefulServiceIds(args, this, true);
 		super.start(args);
-		System.out.printf("\nGenerating Halifax Transit ferry data... DONE in %s.\n", Utils.getPrettyDuration(System.currentTimeMillis() - start));
+		MTLog.log("Generating Halifax Transit ferry data... DONE in %s.", Utils.getPrettyDuration(System.currentTimeMillis() - start));
 	}
 
 	@Override
@@ -100,9 +101,8 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 		} else if (FER_W.equals(gRoute.getRouteShortName())) {
 			return RID_WS;
 		}
-		System.out.printf("\nUnexpected route ID  for %s %s!\n", gRoute);
-		System.exit(-1);
-		return -1l;
+		MTLog.logFatal("Unexpected route ID  for %s %s!", gRoute);
+		return -1L;
 	}
 
 	private static final String RLN_ALD = "Alderney";
@@ -115,8 +115,7 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 		} else if (FER_W.equals(gRoute.getRouteShortName())) {
 			return RLN_WS;
 		}
-		System.out.printf("\nUnexpected route long name for %s!\n", gRoute);
-		System.exit(-1);
+		MTLog.logFatal("Unexpected route long name for %s!", gRoute);
 		return null;
 	}
 
@@ -130,8 +129,7 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 		} else if (FER_W.equals(gRoute.getRouteShortName())) {
 			return RTS_WS;
 		}
-		System.out.printf("\nUnexpected route short name for %s!\n", gRoute);
-		System.exit(-1);
+		MTLog.logFatal("Unexpected route short name for %s!", gRoute);
 		return null;
 	}
 
@@ -158,23 +156,36 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 	private static final String HALIFAX = "Halifax";
 
 	private static HashMap<Long, RouteTripSpec> ALL_ROUTE_TRIPS2;
+
 	static {
-		HashMap<Long, RouteTripSpec> map2 = new HashMap<Long, RouteTripSpec>();
+		HashMap<Long, RouteTripSpec> map2 = new HashMap<>();
 		map2.put(RID_ALD, new RouteTripSpec(RID_ALD, //
 				0, MTrip.HEADSIGN_TYPE_STRING, DARTMOUTH, //
 				1, MTrip.HEADSIGN_TYPE_STRING, HALIFAX) //
 				.addTripSort(0, //
-						Arrays.asList(new String[] { "1073", "1074" })) //
+						Arrays.asList(
+								"1073",
+								"1074"
+						)) //
 				.addTripSort(1, //
-						Arrays.asList(new String[] { "1074", "1073" })) //
+						Arrays.asList(
+								"1074",
+								"1073"
+						)) //
 				.compileBothTripSort());
 		map2.put(RID_WS, new RouteTripSpec(RID_WS, //
 				0, MTrip.HEADSIGN_TYPE_STRING, HALIFAX, //
 				1, MTrip.HEADSIGN_TYPE_STRING, WOODSIDE) //
 				.addTripSort(0, //
-						Arrays.asList(new String[] { "1075", "1073" })) //
+						Arrays.asList(
+								"1075",
+								"1073"
+						)) //
 				.addTripSort(1, //
-						Arrays.asList(new String[] { "1073", "1075" })) //
+						Arrays.asList(
+								"1073",
+								"1075"
+						)) //
 				.compileBothTripSort());
 		ALL_ROUTE_TRIPS2 = map2;
 	}
@@ -208,8 +219,7 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
 			return; // split
 		}
-		System.out.printf("\nUnexpected trip %s!\n", gTrip);
-		System.exit(-1);
+		MTLog.logFatal("Unexpected trip %s!", gTrip);
 	}
 
 	@Override
@@ -239,8 +249,7 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 		if (matcher.find()) {
 			return Integer.parseInt(matcher.group());
 		}
-		System.out.printf("\nUnexpected stop ID for %s!\n", gStop);
-		System.exit(-1);
+		MTLog.logFatal("Unexpected stop ID for %s!", gStop);
 		return -1;
 	}
 
@@ -253,8 +262,7 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 		if (matcher.find()) {
 			return matcher.group();
 		}
-		System.out.printf("\nUnexpected stop code for %s!\n", gStop);
-		System.exit(-1);
+		MTLog.logFatal("Unexpected stop code for %s!", gStop);
 		return null;
 	}
 }
