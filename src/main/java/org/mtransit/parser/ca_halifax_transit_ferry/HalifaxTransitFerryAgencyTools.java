@@ -1,12 +1,14 @@
 package org.mtransit.parser.ca_halifax_transit_ferry;
 
-import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.mtransit.parser.CleanUtils;
 import org.mtransit.parser.DefaultAgencyTools;
 import org.mtransit.parser.MTLog;
 import org.mtransit.parser.Pair;
 import org.mtransit.parser.SplitUtils;
 import org.mtransit.parser.SplitUtils.RouteTripSpec;
+import org.mtransit.parser.StringUtils;
 import org.mtransit.parser.Utils;
 import org.mtransit.parser.gtfs.data.GCalendar;
 import org.mtransit.parser.gtfs.data.GCalendarDate;
@@ -28,12 +30,14 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.mtransit.parser.StringUtils.EMPTY;
+
 // http://www.halifax.ca/opendata/
 // http://www.halifax.ca/opendata/transit.php
 // http://gtfs.halifax.ca/static/google_transit.zip
 public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 
-	public static void main(String[] args) {
+	public static void main(@Nullable String[] args) {
 		if (args == null || args.length == 0) {
 			args = new String[3];
 			args[0] = "input/gtfs.zip";
@@ -43,46 +47,48 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 		new HalifaxTransitFerryAgencyTools().start(args);
 	}
 
-	private HashSet<String> serviceIds;
+	@Nullable
+	private HashSet<Integer> serviceIdInts;
 
 	@Override
-	public void start(String[] args) {
+	public void start(@NotNull String[] args) {
 		MTLog.log("Generating Halifax Transit ferry data...");
 		long start = System.currentTimeMillis();
-		this.serviceIds = extractUsefulServiceIds(args, this, true);
+		this.serviceIdInts = extractUsefulServiceIdInts(args, this, true);
 		super.start(args);
 		MTLog.log("Generating Halifax Transit ferry data... DONE in %s.", Utils.getPrettyDuration(System.currentTimeMillis() - start));
 	}
 
 	@Override
 	public boolean excludingAll() {
-		return this.serviceIds != null && this.serviceIds.isEmpty();
+		return this.serviceIdInts != null && this.serviceIdInts.isEmpty();
 	}
 
 	@Override
-	public boolean excludeCalendar(GCalendar gCalendar) {
-		if (this.serviceIds != null) {
-			return excludeUselessCalendar(gCalendar, this.serviceIds);
+	public boolean excludeCalendar(@NotNull GCalendar gCalendar) {
+		if (this.serviceIdInts != null) {
+			return excludeUselessCalendarInt(gCalendar, this.serviceIdInts);
 		}
 		return super.excludeCalendar(gCalendar);
 	}
 
 	@Override
-	public boolean excludeCalendarDate(GCalendarDate gCalendarDates) {
-		if (this.serviceIds != null) {
-			return excludeUselessCalendarDate(gCalendarDates, this.serviceIds);
+	public boolean excludeCalendarDate(@NotNull GCalendarDate gCalendarDates) {
+		if (this.serviceIdInts != null) {
+			return excludeUselessCalendarDateInt(gCalendarDates, this.serviceIdInts);
 		}
 		return super.excludeCalendarDate(gCalendarDates);
 	}
 
 	@Override
-	public boolean excludeTrip(GTrip gTrip) {
-		if (this.serviceIds != null) {
-			return excludeUselessTrip(gTrip, this.serviceIds);
+	public boolean excludeTrip(@NotNull GTrip gTrip) {
+		if (this.serviceIdInts != null) {
+			return excludeUselessTripInt(gTrip, this.serviceIdInts);
 		}
 		return super.excludeTrip(gTrip);
 	}
 
+	@NotNull
 	@Override
 	public Integer getAgencyRouteType() {
 		return MAgency.ROUTE_TYPE_FERRY;
@@ -95,46 +101,46 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 	private static final String FER_W = "FerW";
 
 	@Override
-	public long getRouteId(GRoute gRoute) {
+	public long getRouteId(@NotNull GRoute gRoute) {
 		if (FER_D.equals(gRoute.getRouteShortName())) {
 			return RID_ALD;
 		} else if (FER_W.equals(gRoute.getRouteShortName())) {
 			return RID_WS;
 		}
-		MTLog.logFatal("Unexpected route ID  for %s %s!", gRoute);
-		return -1L;
+		throw new MTLog.Fatal("Unexpected route ID  for %s %s!", gRoute);
 	}
 
 	private static final String RLN_ALD = "Alderney";
 	private static final String RLN_WS = "Woodside";
 
+	@NotNull
 	@Override
-	public String getRouteLongName(GRoute gRoute) {
+	public String getRouteLongName(@NotNull GRoute gRoute) {
 		if (FER_D.equals(gRoute.getRouteShortName())) {
 			return RLN_ALD;
 		} else if (FER_W.equals(gRoute.getRouteShortName())) {
 			return RLN_WS;
 		}
-		MTLog.logFatal("Unexpected route long name for %s!", gRoute);
-		return null;
+		throw new MTLog.Fatal("Unexpected route long name for %s!", gRoute);
 	}
 
 	private static final String RTS_ALD = "ALD";
 	private static final String RTS_WS = "WS";
 
+	@Nullable
 	@Override
-	public String getRouteShortName(GRoute gRoute) {
+	public String getRouteShortName(@NotNull GRoute gRoute) {
 		if (FER_D.equals(gRoute.getRouteShortName())) {
 			return RTS_ALD;
 		} else if (FER_W.equals(gRoute.getRouteShortName())) {
 			return RTS_WS;
 		}
-		MTLog.logFatal("Unexpected route short name for %s!", gRoute);
-		return null;
+		throw new MTLog.Fatal("Unexpected route short name for %s!", gRoute);
 	}
 
 	private static final String AGENCY_COLOR = "FDB714"; // YELLOW (PDF map)
 
+	@NotNull
 	@Override
 	public String getAgencyColor() {
 		return AGENCY_COLOR;
@@ -143,8 +149,9 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 	private static final String AGENCY_COLOR_BLUE = "08215C"; // BLUE (MetroLink SVG from Wikipedia)
 	private static final String DEFAULT_ROUTE_COLOR = AGENCY_COLOR_BLUE;
 
+	@Nullable
 	@Override
-	public String getRouteColor(GRoute gRoute) {
+	public String getRouteColor(@NotNull GRoute gRoute) {
 		if (StringUtils.isEmpty(gRoute.getRouteColor())) {
 			return DEFAULT_ROUTE_COLOR;
 		}
@@ -155,10 +162,11 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 	private static final String DARTMOUTH = "Dartmouth";
 	private static final String HALIFAX = "Halifax";
 
-	private static HashMap<Long, RouteTripSpec> ALL_ROUTE_TRIPS2;
+	private static final HashMap<Long, RouteTripSpec> ALL_ROUTE_TRIPS2;
 
 	static {
 		HashMap<Long, RouteTripSpec> map2 = new HashMap<>();
+		//noinspection deprecation
 		map2.put(RID_ALD, new RouteTripSpec(RID_ALD, //
 				0, MTrip.HEADSIGN_TYPE_STRING, DARTMOUTH, //
 				1, MTrip.HEADSIGN_TYPE_STRING, HALIFAX) //
@@ -173,6 +181,7 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 								"1073"
 						)) //
 				.compileBothTripSort());
+		//noinspection deprecation
 		map2.put(RID_WS, new RouteTripSpec(RID_WS, //
 				0, MTrip.HEADSIGN_TYPE_STRING, HALIFAX, //
 				1, MTrip.HEADSIGN_TYPE_STRING, WOODSIDE) //
@@ -191,23 +200,25 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 	}
 
 	@Override
-	public int compareEarly(long routeId, List<MTripStop> list1, List<MTripStop> list2, MTripStop ts1, MTripStop ts2, GStop ts1GStop, GStop ts2GStop) {
+	public int compareEarly(long routeId, @NotNull List<MTripStop> list1, @NotNull List<MTripStop> list2, @NotNull MTripStop ts1, @NotNull MTripStop ts2, @NotNull GStop ts1GStop, @NotNull GStop ts2GStop) {
 		if (ALL_ROUTE_TRIPS2.containsKey(routeId)) {
 			return ALL_ROUTE_TRIPS2.get(routeId).compare(routeId, list1, list2, ts1, ts2, ts1GStop, ts2GStop, this);
 		}
 		return super.compareEarly(routeId, list1, list2, ts1, ts2, ts1GStop, ts2GStop);
 	}
 
+	@NotNull
 	@Override
-	public ArrayList<MTrip> splitTrip(MRoute mRoute, GTrip gTrip, GSpec gtfs) {
+	public ArrayList<MTrip> splitTrip(@NotNull MRoute mRoute, @Nullable GTrip gTrip, @NotNull GSpec gtfs) {
 		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
 			return ALL_ROUTE_TRIPS2.get(mRoute.getId()).getAllTrips();
 		}
 		return super.splitTrip(mRoute, gTrip, gtfs);
 	}
 
+	@NotNull
 	@Override
-	public Pair<Long[], Integer[]> splitTripStop(MRoute mRoute, GTrip gTrip, GTripStop gTripStop, ArrayList<MTrip> splitTrips, GSpec routeGTFS) {
+	public Pair<Long[], Integer[]> splitTripStop(@NotNull MRoute mRoute, @NotNull GTrip gTrip, @NotNull GTripStop gTripStop, @NotNull ArrayList<MTrip> splitTrips, @NotNull GSpec routeGTFS) {
 		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
 			return SplitUtils.splitTripStop(mRoute, gTrip, gTripStop, routeGTFS, ALL_ROUTE_TRIPS2.get(mRoute.getId()), this);
 		}
@@ -215,25 +226,27 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 	}
 
 	@Override
-	public void setTripHeadsign(MRoute mRoute, MTrip mTrip, GTrip gTrip, GSpec gtfs) {
+	public void setTripHeadsign(@NotNull MRoute mRoute, @NotNull MTrip mTrip, @NotNull GTrip gTrip, @NotNull GSpec gtfs) {
 		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
 			return; // split
 		}
-		MTLog.logFatal("Unexpected trip %s!", gTrip);
+		throw new MTLog.Fatal("Unexpected trip %s!", gTrip);
 	}
 
+	@NotNull
 	@Override
-	public String cleanTripHeadsign(String tripHeadsign) {
+	public String cleanTripHeadsign(@NotNull String tripHeadsign) {
 		return CleanUtils.cleanLabel(tripHeadsign);
 	}
 
 	private static final Pattern FERRY_STOP = Pattern.compile("(ferry stop - )", Pattern.CASE_INSENSITIVE);
 	private static final Pattern ENDS_WITH_NUMBER = Pattern.compile("( \\([\\d]+\\)$)", Pattern.CASE_INSENSITIVE);
 
+	@NotNull
 	@Override
-	public String cleanStopName(String gStopName) {
-		gStopName = FERRY_STOP.matcher(gStopName).replaceAll(StringUtils.EMPTY);
-		gStopName = ENDS_WITH_NUMBER.matcher(gStopName).replaceAll(StringUtils.EMPTY);
+	public String cleanStopName(@NotNull String gStopName) {
+		gStopName = FERRY_STOP.matcher(gStopName).replaceAll(EMPTY);
+		gStopName = ENDS_WITH_NUMBER.matcher(gStopName).replaceAll(EMPTY);
 		gStopName = CleanUtils.cleanNumbers(gStopName);
 		return CleanUtils.cleanLabel(gStopName);
 	}
@@ -241,28 +254,31 @@ public class HalifaxTransitFerryAgencyTools extends DefaultAgencyTools {
 	private static final Pattern DIGITS = Pattern.compile("[\\d]+");
 
 	@Override
-	public int getStopId(GStop gStop) {
-		if (Utils.isDigitsOnly(gStop.getStopId())) {
-			return Integer.parseInt(gStop.getStopId());
+	public int getStopId(@NotNull GStop gStop) {
+		//noinspection deprecation
+		final String stopId = gStop.getStopId();
+		if (Utils.isDigitsOnly(stopId)) {
+			return Integer.parseInt(stopId);
 		}
-		Matcher matcher = DIGITS.matcher(gStop.getStopId());
+		Matcher matcher = DIGITS.matcher(stopId);
 		if (matcher.find()) {
 			return Integer.parseInt(matcher.group());
 		}
-		MTLog.logFatal("Unexpected stop ID for %s!", gStop);
-		return -1;
+		throw new MTLog.Fatal("Unexpected stop ID for %s!", gStop);
 	}
 
+	@NotNull
 	@Override
-	public String getStopCode(GStop gStop) {
-		if (Utils.isDigitsOnly(gStop.getStopId())) {
-			return gStop.getStopId(); // using stop ID as stop code ("GoTime" number)
+	public String getStopCode(@NotNull GStop gStop) {
+		//noinspection deprecation
+		final String stopId = gStop.getStopId();
+		if (Utils.isDigitsOnly(stopId)) {
+			return stopId; // using stop ID as stop code ("GoTime" number)
 		}
-		Matcher matcher = DIGITS.matcher(gStop.getStopId());
+		Matcher matcher = DIGITS.matcher(stopId);
 		if (matcher.find()) {
 			return matcher.group();
 		}
-		MTLog.logFatal("Unexpected stop code for %s!", gStop);
-		return null;
+		throw new MTLog.Fatal("Unexpected stop code for %s!", gStop);
 	}
 }
